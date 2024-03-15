@@ -1,0 +1,94 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                      String                    @id @default(uuid())
+  name                    String
+  email                   String                    @unique
+  password                String
+  avatar                  String                    @default("someString")
+  language                String                    @default("us")
+  theme                   String                    @default("light")
+  createdAt               DateTime                  @default(now())
+  isActive                Boolean                   @default(false)
+  role                    Role                      @default(USER)
+  flashcardsSets          FlashcardsSet[]
+  favouriteFlashcardsSets FavouriteFlashcardsSets[]
+  reviews                 Review[]
+}
+
+model FlashcardsSet {
+  id                   String                    @id @default(uuid())
+  name                 String
+  desctiption          String?
+  createdAt            DateTime                  @default(now())
+  isPublished          Boolean                   @default(false)
+  modifiedAt           DateTime                  @default(now())
+  author               User                      @relation(fields: [authorId], references: [id])
+  authorId             String
+  flashcards           Flashcard[]
+  tagsOnFlashcardsSets TagsOnFlashcardsSets[]
+  likedBy              FavouriteFlashcardsSets[]
+  reviews              Review[]
+}
+
+model Flashcard {
+  id              String        @id @default(uuid())
+  questionText    String
+  questionImage   String?
+  answerImage     String
+  answerText      String?
+  flashcardSet    FlashcardsSet @relation(fields: [flashcardsSetId], references: [id])
+  flashcardsSetId String
+  order           Int           @default(1)
+}
+
+model Tag {
+  id                   String                 @id @default(uuid())
+  name                 String
+  TagsOnFlashcardsSets TagsOnFlashcardsSets[]
+}
+
+model TagsOnFlashcardsSets {
+  tag             Tag           @relation(fields: [tagId], references: [id])
+  tagId           String
+  flashcardsSet   FlashcardsSet @relation(fields: [flashcardsSetId], references: [id])
+  flashcardsSetId String
+
+  @@id([tagId, flashcardsSetId])
+}
+
+model FavouriteFlashcardsSets {
+  user            User          @relation(fields: [userId], references: [id])
+  userId          String
+  flashcardsSet   FlashcardsSet @relation(fields: [flashcardsSetId], references: [id])
+  flashcardsSetId String
+
+  @@id([userId, flashcardsSetId])
+}
+
+model Review {
+  id              String        @id @default(uuid())
+  score           Int
+  author          User          @relation(fields: [authorId], references: [id])
+  authorId        String
+  flashcardsSetId String
+  flashcardsSet   FlashcardsSet @relation(fields: [flashcardsSetId], references: [id])
+}
+
+enum Role {
+  USER
+  ADMIN
+}
