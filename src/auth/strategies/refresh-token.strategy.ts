@@ -10,13 +10,13 @@ export class RefreshTokenStrategy extends PassportStrategy(Strategy, "jwt-refres
     private readonly config: ConfigService
   ) {
     super({
-      jwtFromRequest: ExtractJwt.fromExtractors([RefreshTokenStrategy.extractJwtFromCookie]),
-      secretOrKey: config.get<string>('REFRESH_TOKEN_SECRET'),
+      jwtFromRequest: ExtractJwt.fromExtractors([RefreshTokenStrategy.extractRefreshTokenFromCookie]),
+      secretOrKey: config.get<string>("REFRESH_TOKEN_SECRET"),
       passReqToCallback: true
     });
   }
 
-  private static extractJwtFromCookie(req: Request) {
+  private static extractRefreshTokenFromCookie(req: Request) {
     if (req?.cookies?.refresh_token) {
       return req.cookies.refresh_token;
     }
@@ -27,6 +27,6 @@ export class RefreshTokenStrategy extends PassportStrategy(Strategy, "jwt-refres
     return {
       ...payload,
       refreshToken: req.cookies.refresh_token
-    }
+    };
   }
 }

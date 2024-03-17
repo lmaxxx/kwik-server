@@ -1,6 +1,6 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable } from "@nestjs/common";
 import { CreateUserDto } from "./dto";
-import { UpdateUserDto } from './dto';
+import { UpdateUserDto } from "./dto";
 import { PrismaService } from "../prisma/prisma.service";
 import { User } from "@prisma/client";
 
@@ -11,12 +11,12 @@ export class UserService {
   ) {}
 
   create(createUserDto: CreateUserDto) {
-    return 'This action adds a new user';
+    return "This action adds a new user";
   }
 
   async findAll() {
-    const users: User[] = await this.prisma.user.findMany()
-    return users
+    const users: User[] = await this.prisma.user.findMany();
+    return users;
   }
 
   findOne(id: number) {

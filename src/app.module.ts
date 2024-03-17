@@ -1,32 +1,19 @@
 import { Module } from "@nestjs/common";
 import { PrismaModule } from "./prisma/prisma.module";
-import { AuthModule } from './auth/auth.module';
-import { UserModule } from './user/user.module';
-import { ConfigModule, ConfigService } from "@nestjs/config";
+import { AuthModule } from "./auth/auth.module";
+import { UserModule } from "./user/user.module";
+import { ConfigModule } from "@nestjs/config";
 import { CacheModule } from "@nestjs/cache-manager";
-import { redisStore } from "cache-manager-redis-yet";
-
+import { RedisOptions } from "./config";
 
 @Module({
   imports: [
-    CacheModule.register({
-      isGlobal: true,
-      imports: [ConfigModule],
-      useFactory: async (configService: ConfigService) => {
-        const store = await redisStore({
-          socket: {
-            host: configService.get<string>('REDIS_HOST'),
-            port: +configService.get<string>('REDIS_PORT'),
-          },
-        });
-        return { store: () => store };
-      },
-      inject: [ConfigService]
-    }),
+    CacheModule.register(RedisOptions),
     ConfigModule.forRoot({ isGlobal: true }),
     PrismaModule,
     AuthModule,
     UserModule
-  ],
+  ]
 })
-export class AppModule {}
+export class AppModule {
+}

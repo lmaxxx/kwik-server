@@ -14,12 +14,12 @@ export class AccessTokenStrategy extends PassportStrategy(Strategy, "jwt-access"
     private readonly prisma: PrismaService
   ) {
     super({
-      jwtFromRequest: ExtractJwt.fromExtractors([AccessTokenStrategy.extractJwtFromCookie]),
-      secretOrKey: config.get<string>('ACCESS_TOKEN_SECRET'),
+      jwtFromRequest: ExtractJwt.fromExtractors([AccessTokenStrategy.extractAccessTokenFromCookie]),
+      secretOrKey: config.get<string>("ACCESS_TOKEN_SECRET")
     });
   }
 
-  private static extractJwtFromCookie(req: Request) {
+  private static extractAccessTokenFromCookie(req: Request) {
     if (req?.cookies?.access_token) {
       return req.cookies.access_token;
     }
@@ -27,8 +27,8 @@ export class AccessTokenStrategy extends PassportStrategy(Strategy, "jwt-access"
   }
 
   async validate(payload: JwtPayload) {
-    const user: User | null = await this.prisma.user.findUnique({where: {id: payload.id}})
-    if(!user) throw new UnauthorizedException()
-    return user
+    const user: User | null = await this.prisma.user.findUnique({ where: { id: payload.id } });
+    if (!user) throw new UnauthorizedException();
+    return user;
   }
 }

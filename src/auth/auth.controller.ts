@@ -1,4 +1,4 @@
-import { Body, Controller, HttpCode, HttpStatus, Post, Res, UseGuards, UseInterceptors } from "@nestjs/common";
+import { Body, Controller, Post, Res, UseGuards, UseInterceptors } from "@nestjs/common";
 import { Response } from "express";
 import { AuthService } from "./auth.service";
 import { SignInDto, SignUpDto } from "./dto";
@@ -13,41 +13,36 @@ export class AuthController {
     private readonly authService: AuthService
   ) {}
 
-  @Post("sign-up")
   @Public()
-  @HttpCode(HttpStatus.CREATED)
+  @Post("sign-up")
   async signUp(@Body() dto: SignUpDto, @Res() res: Response) {
-    const userWithTokens = await this.authService.signUp(dto);
-    res.cookie('access_token', userWithTokens.accessToken, { httpOnly: true, maxAge: 1000 * 60 * 60 * 2 });
-    res.cookie('refresh_token', userWithTokens.refreshToken, { httpOnly: true, maxAge: 1000 * 60 * 60 * 24 * 5 });
-    res.send(userWithTokens)
+    const { user, tokens } = await this.authService.signUp(dto);
+    await this.authService.setJwtTokens(user.id, tokens, res);
+    res.send(user);
   }
 
-  @UseInterceptors(new SerializeDataInterceptor(UserResponseDto))
   @Public()
+  @UseInterceptors(new SerializeDataInterceptor(UserResponseDto))
   @Post("sign-in")
   async signIn(@Body() dto: SignInDto, @Res() res: Response) {
-    const userWithTokens = await this.authService.signIn(dto);
-    res.cookie('access_token', userWithTokens.accessToken, { httpOnly: true, maxAge: 1000 * 60 * 60 * 2 });
-    res.cookie('refresh_token', userWithTokens.refreshToken, { httpOnly: true, maxAge: 1000 * 60 * 60 * 24 * 5 });
-    res.send(userWithTokens)
+    const { user, tokens } = await this.authService.signIn(dto);
+    await this.authService.setJwtTokens(user.id, tokens, res);
+    res.send(user);
+  }
+
+  @Post("logout")
+  async logout(@Res() res: Response, @GetCurrentUser("id") id: string) {
+    await this.authService.clearJwtTokens(id, res);
+    res.sendStatus(200);
   }
 
   @Public()
   @UseGuards(RefreshTokenGuard)
   @Post("refresh")
-  async refresh(@Res() res: Response, @GetCurrentUser('id') id: string) {
+  async refresh(@Res() res: Response, @GetCurrentUser("id") id: string) {
     const tokens = await this.authService.refresh(id);
-    res.cookie('access_token', tokens.accessToken, { httpOnly: true, maxAge: 1000 * 60 * 60 * 2 });
-    res.cookie('refresh_token', tokens.refreshToken, { httpOnly: true, maxAge: 1000 * 60 * 60 * 24 * 5 });
-    res.send("success")
+    await this.authService.setJwtTokens(id, tokens, res);
+    res.sendStatus(200);
   }
 
-  @Post("logout")
-  async logOut(@Res() res: Response, @GetCurrentUser('id') id: string) {
-    res.clearCookie("access_token")
-    res.clearCookie("refresh_token")
-    await this.authService.logout(id);
-    res.send("success")
-  }
 }

@@ -10,8 +10,8 @@ export class SerializeDataInterceptor implements NestInterceptor {
   intercept(context: ExecutionContext, next: CallHandler) {
     return next.handle().pipe(
       map(data => {
-        return plainToInstance(this.classToUse, data)
+        return plainToInstance(this.classToUse, data);
       })
-    )
+    );
   }
 }

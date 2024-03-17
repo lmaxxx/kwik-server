@@ -8,14 +8,13 @@ import {
   Delete,
   UseInterceptors
 } from "@nestjs/common";
-import { UserService } from './user.service';
+import { UserService } from "./user.service";
 import { CreateUserDto, UserResponseDto } from "./dto";
 import { UpdateUserDto } from "./dto";
 import { SerializeDataInterceptor } from "../common/interceptors";
 import { GetCurrentUser } from "../common/decorators";
 
-
-@Controller('user')
+@Controller("user")
 @UseInterceptors(new SerializeDataInterceptor(UserResponseDto))
 export class UserController {
   constructor(private readonly userService: UserService) {}
@@ -24,23 +23,24 @@ export class UserController {
   create(@Body() createUserDto: CreateUserDto) {
     return this.userService.create(createUserDto);
   }
+
   @Get()
   findAll(@GetCurrentUser("id") id: string) {
     return this.userService.findAll();
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
+  @Get(":id")
+  findOne(@Param("id") id: string) {
     return this.userService.findOne(+id);
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
+  @Patch(":id")
+  update(@Param("id") id: string, @Body() updateUserDto: UpdateUserDto) {
     return this.userService.update(+id, updateUserDto);
   }
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
+  @Delete(":id")
+  remove(@Param("id") id: string) {
     return this.userService.remove(+id);
   }
 }
