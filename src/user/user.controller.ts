@@ -26,7 +26,6 @@ export class UserController {
   }
   @Get()
   findAll(@GetCurrentUser("id") id: string) {
-    console.log(id)
     return this.userService.findAll();
   }
 

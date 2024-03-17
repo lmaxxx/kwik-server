@@ -1,6 +1,7 @@
 import { PassportStrategy } from "@nestjs/passport";
 import { ExtractJwt, Strategy } from "passport-jwt";
 import { Injectable, UnauthorizedException } from "@nestjs/common";
+import { Request } from "express";
 import { ConfigService } from "@nestjs/config";
 import { JwtPayload } from "../types";
 import { PrismaService } from "../../prisma/prisma.service";
@@ -13,9 +14,16 @@ export class AccessTokenStrategy extends PassportStrategy(Strategy, "jwt-access"
     private readonly prisma: PrismaService
   ) {
     super({
-      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+      jwtFromRequest: ExtractJwt.fromExtractors([AccessTokenStrategy.extractJwtFromCookie]),
       secretOrKey: config.get<string>('ACCESS_TOKEN_SECRET'),
     });
+  }
+
+  private static extractJwtFromCookie(req: Request) {
+    if (req?.cookies?.access_token) {
+      return req.cookies.access_token;
+    }
+    return null;
   }
 
   async validate(payload: JwtPayload) {

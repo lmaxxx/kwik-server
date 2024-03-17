@@ -7,7 +7,6 @@ import { JwtPayload, Tokens } from "./types";
 import { ConfigService } from "@nestjs/config";
 import { User } from "@prisma/client";
 
-
 @Injectable()
 export class AuthService {
   constructor(
@@ -40,6 +39,7 @@ export class AuthService {
     })
 
     if(!user) throw new ForbiddenException('Access Denied');
+
 
     const passwordMatches = await argon.verify(user.password, dto.password)
     if(!passwordMatches) throw new ForbiddenException('Access Denied');

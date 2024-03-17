@@ -1,11 +1,12 @@
-import { Body, Controller, HttpCode, HttpStatus, Post, UseInterceptors } from "@nestjs/common";
+import { Body, Controller, HttpCode, HttpStatus, Post, Res, UseInterceptors } from "@nestjs/common";
+import { Response } from "express";
 import { AuthService } from "./auth.service";
 import { SignInDto, SignUpDto } from "./dto";
 import { UserResponseDto } from "../user/dto";
 import { SerializeDataInterceptor } from "../common/interceptors";
 import { Public } from "../common/decorators";
 
-@Controller('auth')
+@Controller("auth")
 export class AuthController {
   constructor(
     private readonly authService: AuthService
@@ -14,27 +15,30 @@ export class AuthController {
   @Post("sign-up")
   @Public()
   @HttpCode(HttpStatus.CREATED)
-  signUp(@Body() dto: SignUpDto) {
-    return this.authService.signUp(dto)
+  async signUp(@Body() dto: SignUpDto, @Res() res: Response) {
+    const userWithTokens = await this.authService.signUp(dto);
+    res.cookie('access_token', userWithTokens.accessToken, { httpOnly: true });
+    res.send(userWithTokens)
   }
 
   @UseInterceptors(new SerializeDataInterceptor(UserResponseDto))
   @Public()
-  @HttpCode(HttpStatus.OK)
   @Post("sign-in")
-  signIn(@Body() dto: SignInDto) {
-    return this.authService.signIn(dto)
+  async signIn(@Body() dto: SignInDto, @Res() res: Response) {
+    const userWithTokens = await this.authService.signIn(dto);
+    res.cookie('access_token', userWithTokens.accessToken, { httpOnly: true });
+    res.send(userWithTokens)
   }
 
-  @HttpCode(HttpStatus.OK)
   @Post("logout")
-  logOut() {
-    return this.authService.logout()
+  logOut(@Res() res: Response) {
+    res.clearCookie("access_token")
+    res.send("success")
+    // return this.authService.logout();
   }
 
-  @HttpCode(HttpStatus.OK)
-  @Post('refresh')
+  @Post("refresh")
   refresh() {
-    return this.authService.refresh()
+    return this.authService.refresh();
   }
 }
