@@ -9,22 +9,20 @@ import { redisStore } from "cache-manager-redis-yet";
 
 @Module({
   imports: [
-    // CacheModule.register({
-    //   isGlobal: true,
-    //   imports: [ConfigModule],
-    //   useFactory: async (configService: ConfigService) => {
-    //     const store = await redisStore({
-    //       socket: {
-    //         host: configService.get<string>('REDIS_HOST'),
-    //         port: +configService.get<string>('REDIS_PORT'),
-    //       },
-    //     });
-    //     return {
-    //       store: () => store,
-    //     };
-    //   },
-    //   inject: [ConfigService]
-    // }),
+    CacheModule.register({
+      isGlobal: true,
+      imports: [ConfigModule],
+      useFactory: async (configService: ConfigService) => {
+        const store = await redisStore({
+          socket: {
+            host: configService.get<string>('REDIS_HOST'),
+            port: +configService.get<string>('REDIS_PORT'),
+          },
+        });
+        return { store: () => store };
+      },
+      inject: [ConfigService]
+    }),
     ConfigModule.forRoot({ isGlobal: true }),
     PrismaModule,
     AuthModule,

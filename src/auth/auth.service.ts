@@ -6,6 +6,7 @@ import * as argon from 'argon2';
 import { JwtPayload, Tokens } from "./types";
 import { ConfigService } from "@nestjs/config";
 import { User } from "@prisma/client";
+import {Cache} from "@nestjs/cache-manager";
 
 @Injectable()
 export class AuthService {
@@ -13,6 +14,7 @@ export class AuthService {
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
     private readonly config: ConfigService,
+    private readonly cacheManager: Cache
   ) {}
 
   async signUp(dto: SignUpDto) {
@@ -29,6 +31,7 @@ export class AuthService {
       data: {...dto, password: hashedPassword}
     })
     const tokens: Tokens = await this.getTokens(user.id, user.email)
+    await this.cacheManager.set(`${user.id}:refresh_token`, tokens.refreshToken, 60 * 60 * 24 * 5)
 
     return { ...user, ...tokens }
   }
@@ -40,20 +43,30 @@ export class AuthService {
 
     if(!user) throw new ForbiddenException('Access Denied');
 
-
     const passwordMatches = await argon.verify(user.password, dto.password)
     if(!passwordMatches) throw new ForbiddenException('Access Denied');
 
     const tokens: Tokens = await this.getTokens(user.id, user.email)
+
+    await this.cacheManager.set(`${user.id}:refresh_token`, tokens.refreshToken, 60 * 60 * 24 * 5)
     return { ...user , ...tokens }
   }
 
-  async logout() {
-
+  async logout(id: string) {
+    await this.cacheManager.del(`${id}:refresh_token`)
   }
 
-  async refresh() {
+  async refresh(id: string) {
+    const refreshToken = await this.cacheManager.get(`${id}:refresh_token`)
+    const user: User | null = await this.prisma.user.findUnique({
+      where: {id}
+    })
 
+    if(!refreshToken || !user) throw new ForbiddenException('Access Denied');
+
+    const tokens = await this.getTokens(user.id, user.email)
+    await this.cacheManager.set(`${user.id}:refresh_token`, tokens.refreshToken, 60 * 60 * 24 * 5)
+    return tokens
   }
 
   async getTokens(userId: string, email: string) {
@@ -65,11 +78,11 @@ export class AuthService {
     const [accessToken, refreshToken] = await Promise.all([
       this.jwtService.signAsync(jwtPayload, {
         secret: this.config.get<string>('ACCESS_TOKEN_SECRET'),
-        expiresIn: "15m"
+        expiresIn: "2h"
       }),
       this.jwtService.signAsync(jwtPayload, {
         secret: this.config.get<string>('REFRESH_TOKEN_SECRET'),
-        expiresIn: "7d"
+        expiresIn: "5d"
       })
     ])
 
