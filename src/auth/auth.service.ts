@@ -26,7 +26,7 @@ export class AuthService {
       where: { email: dto.email }
     });
 
-    if (possibleUser) throw new BadRequestException("Email is already in use");
+    if (possibleUser) throw new BadRequestException(["Email is already in use"]);
 
     const hashedPassword = await argon.hash(dto.password);
     const user: User = await this.prisma.user.create({
@@ -42,10 +42,10 @@ export class AuthService {
       where: { email: dto.email }
     });
 
-    if (!user) throw new ForbiddenException("Incorrect email or password");
+    if (!user) throw new BadRequestException(["Incorrect email or password"]);
 
     const passwordMatches = await argon.verify(user.password, dto.password);
-    if (!passwordMatches) throw new ForbiddenException("Incorrect email or password");
+    if (!passwordMatches) throw new BadRequestException(["Incorrect email or password"]);
 
     const tokens: Tokens = await this.getTokens(user.id, user.email);
 
@@ -58,7 +58,7 @@ export class AuthService {
       where: { id }
     });
 
-    if (!refreshToken || !user) throw new ForbiddenException("Access Denied");
+    if (!refreshToken || !user) throw new ForbiddenException(["Access Denied"]);
 
     const tokens: Tokens = await this.getTokens(user.id, user.email);
     return tokens;
