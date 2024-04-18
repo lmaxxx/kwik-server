@@ -10,6 +10,9 @@ async function bootstrap() {
   app.useGlobalPipes(new ValidationPipe());
   app.useGlobalGuards(new AccessTokenGuard(app.get(Reflector)));
   app.use(cookieParser());
+  app.enableCors({
+    origin: "http://localhost:4200",
+  })
   await app.listen(8080);
 }
 

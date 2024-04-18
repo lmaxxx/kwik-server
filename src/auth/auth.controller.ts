@@ -14,20 +14,21 @@ export class AuthController {
   ) {}
 
   @Public()
+  @UseInterceptors(new SerializeDataInterceptor(UserResponseDto))
   @Post("sign-up")
-  async signUp(@Body() dto: SignUpDto, @Res() res: Response) {
+  async signUp(@Body() dto: SignUpDto, @Res({passthrough: true}) res: Response) {
     const { user, tokens } = await this.authService.signUp(dto);
     await this.authService.setJwtTokens(user.id, tokens, res);
-    res.send(user);
+    return user
   }
 
   @Public()
   @UseInterceptors(new SerializeDataInterceptor(UserResponseDto))
   @Post("sign-in")
-  async signIn(@Body() dto: SignInDto, @Res() res: Response) {
+  async signIn(@Body() dto: SignInDto, @Res({passthrough: true}) res: Response) {
     const { user, tokens } = await this.authService.signIn(dto);
     await this.authService.setJwtTokens(user.id, tokens, res);
-    res.send(user);
+    return user
   }
 
   @Post("logout")
