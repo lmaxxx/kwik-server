@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { BadRequestException, Injectable, InternalServerErrorException } from "@nestjs/common";
 import { CreateUserDto } from "./dto";
 import { UpdateUserDto } from "./dto";
 import { PrismaService } from "../prisma/prisma.service";
@@ -19,12 +19,34 @@ export class UserService {
     return users;
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} user`;
+  async findOne(id: string) {
+    const user: User | null = await this.prisma.user.findUnique({
+      where: {id}
+    });
+
+    if(!user) throw new BadRequestException(["User with current id doesn't exist"])
+
+    return user;
   }
 
-  update(id: number, updateUserDto: UpdateUserDto) {
-    return `This action updates a #${id} user`;
+  async update(id: string, updateUserDto: UpdateUserDto) {
+    try {
+      const user: User | null = await this.prisma.user.update({
+        where: {id},
+        data: updateUserDto
+      });
+
+      return user;
+    } catch (error) {
+      if(error.code === "P2025") {
+        throw new BadRequestException(["User with current id doesn't exist"])
+      } else {
+        throw new InternalServerErrorException()
+      }
+
+    }
+
+
   }
 
   remove(id: number) {
